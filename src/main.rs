@@ -1,8 +1,18 @@
-mod config;
+use std::io;
 
 use tokio;
-use tokio::net::{UdpSocket};
-use std::io;
+use tokio::net::UdpSocket;
+
+use crate::common::RecordType;
+use crate::header::Header;
+use crate::question::Question;
+use crate::resourserecord::ResourceRecord;
+
+mod config;
+mod common;
+mod header;
+mod question;
+mod resourserecord;
 
 const DINOSAURUST: &str = "
     ____  _                                              __
@@ -24,10 +34,29 @@ async fn main() -> io::Result<()> {
     let mut buff = [0; 1024];
     loop {
         let (len, addr) = sock.recv_from(&mut buff).await?;
+
         let x = &buff[..len];
         let content = String::from_utf8(Vec::from(x)).unwrap();
         println!("Get message: {content}");
-        sock.send_to(x, addr).await?;
+
+        let mut header = Header::new_reply();
+        let question = Question::new("www.google.com".to_string(), RecordType::A);
+        let record = ResourceRecord::new("www.google.com".to_string());
+        header.n_question = 1;
+        header.n_answer = 1;
+
+        let mut res = header.to_vec();
+        let mut question_data = question.to_vec();
+        let mut record_data = record.to_vec();
+        res.append(&mut question_data);
+        res.append(&mut record_data);
+
+        for x in &res {
+            print!("{:08b} ", x)
+        }
+        println!();
+
+        sock.send_to(&res[..], addr).await?;
     }
 
     Ok(())
