@@ -1,6 +1,6 @@
-use std::cmp::Ord;
 use std::net::IpAddr;
-use clap::{Parser, arg, value_parser};
+
+use clap::{arg, value_parser, Parser};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -13,6 +13,11 @@ pub struct Config {
     pub port: u32,
 }
 
+impl Config {
+    pub fn socket_address_str(&self) -> String {
+        format!("{}:{}", self.ip, self.port)
+    }
+}
 
 pub fn load_config() -> Config {
     Config::parse()

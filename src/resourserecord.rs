@@ -2,7 +2,7 @@ use crate::common::{ClassCode, RecordType};
 use std::net::Ipv4Addr;
 
 enum ResourceData {
-    A(Ipv4Addr)
+    A(Ipv4Addr),
 }
 
 pub struct ResourceRecord {

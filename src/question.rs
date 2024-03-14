@@ -1,4 +1,4 @@
-use crate::common::{ClassCode};
+use crate::common::ClassCode;
 
 pub struct Question {
     pub name: Vec<String>,
