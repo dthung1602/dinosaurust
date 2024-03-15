@@ -1,18 +1,19 @@
-use crate::common::ClassCode;
+use crate::common::{FlagClassCode, FlagRecordType};
+use bitflags::Flags;
 
 pub struct Question {
-    pub name: Vec<String>,
-    pub record_type: u16,
-    pub class_code: u16,
+    name: Vec<String>,
+    record_type: u16,
+    class_code: u16,
 }
 
 impl Question {
-    pub fn new(raw_name: String, record_type: u16) -> Question {
+    pub fn new(raw_name: String, record_type: FlagRecordType) -> Question {
         let name: Vec<String> = raw_name.split('.').map(|s| s.to_string()).collect();
         Question {
             name,
-            record_type,
-            class_code: ClassCode::IN,
+            record_type: record_type.bits(),
+            class_code: FlagClassCode::IN.bits(),
         }
     }
 

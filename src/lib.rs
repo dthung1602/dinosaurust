@@ -2,18 +2,21 @@ use std::io;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use rand::prelude::*;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
-use common::RecordType;
 use config::Config;
-use header::Header;
 use question::Question;
 use resourserecord::ResourceRecord;
+
+use crate::common::FlagRecordType;
+use crate::message::DNSMessage;
 
 mod common;
 mod config;
 mod header;
+mod message;
 mod question;
 mod resourserecord;
 
@@ -84,17 +87,13 @@ async fn handle_request(buff: Vec<u8>, tx: mpsc::Sender<ResponsePair>, addr: Soc
     let content = String::from_utf8(buff).unwrap();
     println!("Get message: {content}");
 
-    let mut header = Header::new_reply();
-    let question = Question::new("www.google.com".to_string(), RecordType::A);
+    let question = Question::new("www.google.com".to_string(), FlagRecordType::A);
     let record = ResourceRecord::new("www.google.com".to_string());
-    header.n_question = 1;
-    header.n_answer = 1;
 
-    let mut res = header.to_vec();
-    let mut question_data = question.to_vec();
-    let mut record_data = record.to_vec();
-    res.append(&mut question_data);
-    res.append(&mut record_data);
+    let mut message = DNSMessage::new_reply();
+    message.add_question(question).add_resource(record);
+
+    let res = message.to_vec();
 
     tx.send((res, addr)).await.unwrap()
 }

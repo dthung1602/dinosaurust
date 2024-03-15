@@ -1,5 +1,8 @@
-use crate::common::{ClassCode, RecordType};
 use std::net::Ipv4Addr;
+
+use bitflags::Flags;
+
+use crate::common::{FlagClassCode, FlagRecordType};
 
 enum ResourceData {
     A(Ipv4Addr),
@@ -20,8 +23,8 @@ impl ResourceRecord {
         let ip = Ipv4Addr::new(1, 1, 1, 1);
         ResourceRecord {
             name,
-            record_type: RecordType::A,
-            class_code: ClassCode::IN,
+            record_type: FlagRecordType::A.bits(),
+            class_code: FlagClassCode::IN.bits(),
             ttl: 111,
             length: 4,
             data: ResourceData::A(ip),

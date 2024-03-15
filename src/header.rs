@@ -1,3 +1,7 @@
+use bitflags::Flags;
+
+use crate::common::*;
+
 #[derive(Debug)]
 pub struct Header {
     pub id: u16,
@@ -8,45 +12,51 @@ pub struct Header {
     pub n_addi_rrs: u16,
 }
 
-pub struct Flags {}
-
-impl Flags {
-    const QR_Q: u16 = 0b_0_000000000000000;
-    const QR_R: u16 = 0b_1_000000000000000;
-
-    const OPCODE_QUERY: u16 = 0b0_0000_00000000000;
-    const OPCODE_IQUERY: u16 = 0b0_0001_00000000000;
-    const OPCODE_STATUS: u16 = 0b0_0010_00000000000;
-
-    const AA_FALSE: u16 = 0b00000_0_0000000000;
-    const AA_TRUE: u16 = 0b00000_1_0000000000;
-
-    const TC_FALSE: u16 = 0b000000_0_000000000;
-    const TC_TRUE: u16 = 0b000000_1_000000000;
-
-    const RD_FALSE: u16 = 0b0000000_0_00000000;
-    const RD_TRUE: u16 = 0b0000000_1_00000000;
-
-    const RA_FALSE: u16 = 0b00000000_0_0000000;
-    const RA_TRUE: u16 = 0b00000000_1_0000000;
-
-    const RCODE_NOERROR: u16 = 0b000000000000_0000;
-    const RCODE_FORMERR: u16 = 0b000000000000_0001;
-    const RCODE_SERVFAIL: u16 = 0b000000000000_0010;
-    const RCODE_NXDOMAIN: u16 = 0b000000000000_0011;
-}
-
 impl Header {
-    pub fn new_reply() -> Header {
-        let flags = Flags::QR_R | Flags::OPCODE_STATUS | Flags::RCODE_NOERROR;
+    pub fn new() -> Header {
         Header {
-            id: 1212,
-            flags,
+            id: rand::random(),
+            flags: 0,
             n_question: 0,
             n_answer: 0,
             n_auth_res: 0,
             n_addi_rrs: 0,
         }
+    }
+
+    pub fn set_qr(&mut self, qr: FlagQR) -> &mut Self {
+        self.flags = self.flags & FlagQR::RESET.bits() | qr.bits();
+        self
+    }
+
+    pub fn set_opcode(&mut self, opcode: FlagOpcode) -> &mut Self {
+        self.flags = self.flags & FlagOpcode::RESET.bits() | opcode.bits();
+        self
+    }
+
+    pub fn set_aa(&mut self, aa: FlagAA) -> &mut Self {
+        self.flags = self.flags & FlagAA::RESET.bits() | aa.bits();
+        self
+    }
+
+    pub fn set_tc(&mut self, tc: FlagTC) -> &mut Self {
+        self.flags = self.flags & FlagTC::RESET.bits() | tc.bits();
+        self
+    }
+
+    pub fn set_rd(&mut self, rd: FlagRD) -> &mut Self {
+        self.flags = self.flags & FlagRD::RESET.bits() | rd.bits();
+        self
+    }
+
+    pub fn set_ra(&mut self, ra: FlagRA) -> &mut Self {
+        self.flags = self.flags & FlagRA::RESET.bits() | ra.bits();
+        self
+    }
+
+    pub fn set_rcode(&mut self, rcode: FlagRCode) -> &mut Self {
+        self.flags = self.flags & FlagRA::RESET.bits() | rcode.bits();
+        self
     }
 
     pub fn to_vec(&self) -> Vec<u8> {
