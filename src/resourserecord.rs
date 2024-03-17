@@ -4,10 +4,12 @@ use bitflags::Flags;
 
 use crate::common::{FlagClassCode, FlagRecordType};
 
+#[derive(Debug)]
 enum ResourceData {
     A(Ipv4Addr),
 }
 
+#[derive(Debug)]
 pub struct ResourceRecord {
     name: Vec<String>,
     record_type: u16,

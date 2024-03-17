@@ -1,6 +1,7 @@
 use crate::common::{FlagClassCode, FlagRecordType};
 use bitflags::Flags;
 
+#[derive(Debug)]
 pub struct Question {
     name: Vec<String>,
     record_type: u16,

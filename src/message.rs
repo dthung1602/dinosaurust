@@ -3,6 +3,7 @@ use crate::header::Header;
 use crate::question::Question;
 use crate::resourserecord::ResourceRecord;
 
+#[derive(Debug)]
 pub struct DNSMessage {
     header: Header,
     questions: Vec<Question>,
@@ -10,13 +11,17 @@ pub struct DNSMessage {
 }
 
 impl DNSMessage {
-    // TODO rename reply_to(request: DNSMessage)
-    pub fn new_reply() -> DNSMessage {
-        let mut header = Header::new();
-        header.set_qr(FlagQR::R);
-
+    pub fn new() -> DNSMessage {
         DNSMessage {
-            header,
+            header: Header::new(),
+            questions: vec![],
+            resources: vec![],
+        }
+    }
+
+    pub fn reply_to(reply: &DNSMessage) -> DNSMessage {
+        DNSMessage {
+            header: Header::reply_to(&reply.header),
             questions: vec![],
             resources: vec![],
         }
@@ -45,5 +50,22 @@ impl DNSMessage {
             res.append(&mut v);
         }
         res
+    }
+
+    pub fn parse(buff: Vec<u8>) -> Result<DNSMessage, *const str> {
+        let mut message = Self::new();
+        message.header = Header::parse(&buff)?;
+
+        println!("Parse message: {:?}", message);
+        println!("BIN: {:0<8b}", message.header.flags);
+        println!("{:?}", message.header.get_qr());
+        println!("{:?}", message.header.get_opcode());
+        println!("{:?}", message.header.get_aa());
+        println!("{:?}", message.header.get_tc());
+        println!("{:?}", message.header.get_rd());
+        println!("{:?}", message.header.get_ra());
+        println!("{:?}", message.header.get_rcode());
+
+        Ok(message)
     }
 }

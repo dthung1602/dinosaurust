@@ -51,7 +51,7 @@ impl DNSServer {
                 for x in &buff {
                     print!("{:08b} ", x)
                 }
-                println!();
+                println!("\n");
             }
         });
 
@@ -84,16 +84,14 @@ impl DNSServer {
 }
 
 async fn handle_request(buff: Vec<u8>, tx: mpsc::Sender<ResponsePair>, addr: SocketAddr) {
-    let content = String::from_utf8(buff).unwrap();
-    println!("Get message: {content}");
+    let request = DNSMessage::parse(buff).unwrap();
 
+    let mut reply = DNSMessage::reply_to(&request);
     let question = Question::new("www.google.com".to_string(), FlagRecordType::A);
     let record = ResourceRecord::new("www.google.com".to_string());
+    reply.add_question(question).add_resource(record);
 
-    let mut message = DNSMessage::new_reply();
-    message.add_question(question).add_resource(record);
-
-    let res = message.to_vec();
+    let res = reply.to_vec();
 
     tx.send((res, addr)).await.unwrap()
 }

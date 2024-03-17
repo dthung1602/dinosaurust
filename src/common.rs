@@ -1,15 +1,21 @@
 use bitflags::{bitflags, Flags};
 
+#[derive(Debug)]
+pub struct FlagQR(u16);
+
 bitflags! {
-    pub struct FlagQR: u16 {
+    impl  FlagQR: u16 {
         const RESET = 0b_0_000000000000000;
         const Q = 0b_0_000000000000000;
         const R = 0b_1_000000000000000;
     }
 }
 
+#[derive(Debug)]
+pub struct FlagOpcode(u16);
+
 bitflags! {
-    pub struct FlagOpcode: u16 {
+    impl FlagOpcode: u16 {
         const RESET = 0b0_0000_00000000000;
         const QUERY = 0b0_0000_00000000000;
         const IQUERY = 0b0_0001_00000000000;
@@ -17,40 +23,55 @@ bitflags! {
     }
 }
 
+#[derive(Debug)]
+pub struct FlagAA(u16);
+
 bitflags! {
-    pub struct FlagAA: u16 {
+    impl FlagAA: u16 {
         const RESET = 0b00000_0_0000000000;
         const FALSE = 0b00000_0_0000000000;
         const TRUE = 0b00000_1_0000000000;
     }
 }
 
+#[derive(Debug)]
+pub struct FlagTC(u16);
+
 bitflags! {
-    pub struct FlagTC: u16 {
+    impl FlagTC: u16 {
         const RESET = 0b000000_0_000000000;
         const FALSE = 0b000000_0_000000000;
         const TRUE = 0b000000_1_000000000;
     }
 }
 
+#[derive(Debug)]
+pub struct FlagRD(u16);
+
 bitflags! {
-    pub struct FlagRD: u16 {
+    impl FlagRD: u16 {
         const RESET = 0b0000000_0_00000000;
         const FALSE = 0b0000000_0_00000000;
         const TRUE = 0b0000000_1_00000000;
     }
 }
 
+#[derive(Debug)]
+pub struct FlagRA(u16);
+
 bitflags! {
-    pub struct FlagRA: u16 {
+    impl FlagRA: u16 {
         const RESET = 0b00000000_0_0000000;
         const FALSE = 0b00000000_0_0000000;
         const TRUE = 0b00000000_1_0000000;
     }
 }
 
+#[derive(Debug)]
+pub struct FlagRCode(u16);
+
 bitflags! {
-    pub struct FlagRCode: u16 {
+    impl FlagRCode: u16 {
         const RESET = 0b000000000000_0000;
         const NOERROR = 0b000000000000_0000;
         const FORMERR = 0b000000000000_0001;
@@ -59,8 +80,11 @@ bitflags! {
     }
 }
 
+#[derive(Debug)]
+pub struct FlagRecordType(u16);
+
 bitflags! {
-    pub struct FlagRecordType: u16 {
+    impl FlagRecordType: u16 {
         const A = 1;
         const NS = 2;
         const MD = 3;
@@ -80,8 +104,11 @@ bitflags! {
     }
 }
 
+#[derive(Debug)]
+pub struct FlagClassCode(u16);
+
 bitflags! {
-    pub struct FlagClassCode: u16 {
+    impl FlagClassCode: u16 {
         const IN = 1;
         const CS = 2;
         const CH = 3;
