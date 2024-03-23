@@ -1,7 +1,6 @@
 use bitflags::Flags;
 
 use crate::common::*;
-use crate::header;
 
 #[derive(Debug)]
 pub struct Header {
@@ -14,6 +13,8 @@ pub struct Header {
 }
 
 impl Header {
+    pub const SIZE: usize = 12;
+
     pub fn new() -> Header {
         Header {
             id: rand::random(),
@@ -38,6 +39,7 @@ impl Header {
         header.set_aa(FlagAA::FALSE);
         header.set_tc(FlagTC::FALSE);
         header.set_ra(FlagRA::TRUE); // TODO support this
+
         header
     }
 
@@ -152,7 +154,7 @@ impl Header {
         ]
     }
 
-    pub fn parse(buff: &Vec<u8>) -> Result<Header, *const str> {
+    pub fn parse(buff: &[u8]) -> Result<Header, *const str> {
         let mut header = Header {
             id: 0,
             flags: 0,

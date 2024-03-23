@@ -7,12 +7,12 @@
 
 ## Roadmap
 
-- [ ] Set up UDP server
-- [ ] Send ping pong
-- [ ] Write header
-- [ ] Write answer section
-- [ ] Parse header
-- [ ] Parse question section
+- [x] Set up UDP server
+- [x] Send ping pong
+- [x] Write header
+- [x] Write answer section
+- [x] Parse header
+- [x] Parse question section
 - [ ] Compress
 - [ ] Forward to other server
 - [ ] Caching policy

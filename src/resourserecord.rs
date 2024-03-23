@@ -2,7 +2,7 @@ use std::net::Ipv4Addr;
 
 use bitflags::Flags;
 
-use crate::common::{FlagClassCode, FlagRecordType};
+use crate::common::{FlagClassCode, FlagRecordType, LabelSeq};
 
 #[derive(Debug)]
 enum ResourceData {
@@ -11,7 +11,7 @@ enum ResourceData {
 
 #[derive(Debug)]
 pub struct ResourceRecord {
-    name: Vec<String>,
+    name: LabelSeq,
     record_type: u16,
     class_code: u16,
     ttl: u32,
@@ -21,10 +21,9 @@ pub struct ResourceRecord {
 
 impl ResourceRecord {
     pub fn new(raw_name: String) -> ResourceRecord {
-        let name: Vec<String> = raw_name.split('.').map(|s| s.to_string()).collect();
         let ip = Ipv4Addr::new(1, 1, 1, 1);
         ResourceRecord {
-            name,
+            name: LabelSeq::from_string(raw_name),
             record_type: FlagRecordType::A.bits(),
             class_code: FlagClassCode::IN.bits(),
             ttl: 111,
@@ -34,13 +33,7 @@ impl ResourceRecord {
     }
 
     pub fn to_vec(&self) -> Vec<u8> {
-        let mut res = vec![];
-        for part in &self.name {
-            let bytes = part.as_bytes();
-            let len = bytes.len() as u8;
-            res.push(len);
-            res.extend_from_slice(bytes);
-        }
+        let mut res = self.name.to_vec();
 
         let mut rest = vec![
             0,

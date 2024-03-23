@@ -47,11 +47,11 @@ impl DNSServer {
         tokio::spawn(async move {
             while let Some((buff, addr)) = rx.recv().await {
                 let len = sock_clone.send_to(&buff[..], addr).await.unwrap();
-                println!("Sent {len} bytes to {addr}:");
+                println!("\nSent {len} bytes to {addr}:");
                 for x in &buff {
                     print!("{:08b} ", x)
                 }
-                println!("\n");
+                println!("\n\n--------\n\n");
             }
         });
 
@@ -86,10 +86,13 @@ impl DNSServer {
 async fn handle_request(buff: Vec<u8>, tx: mpsc::Sender<ResponsePair>, addr: SocketAddr) {
     let request = DNSMessage::parse(buff).unwrap();
 
+    println!("\nGet request: {:?}", request);
+
     let mut reply = DNSMessage::reply_to(&request);
-    let question = Question::new("www.google.com".to_string(), FlagRecordType::A);
     let record = ResourceRecord::new("www.google.com".to_string());
-    reply.add_question(question).add_resource(record);
+    reply.add_resource(record);
+
+    println!("\nReply: {:?}", reply);
 
     let res = reply.to_vec();
 

@@ -1,4 +1,3 @@
-use crate::common::FlagQR;
 use crate::header::Header;
 use crate::question::Question;
 use crate::resourserecord::ResourceRecord;
@@ -19,10 +18,14 @@ impl DNSMessage {
         }
     }
 
-    pub fn reply_to(reply: &DNSMessage) -> DNSMessage {
+    pub fn reply_to(request: &DNSMessage) -> DNSMessage {
+        let mut header = Header::reply_to(&request.header);
+        let questions = request.questions.clone();
+        header.n_question = questions.len() as u16;
+
         DNSMessage {
-            header: Header::reply_to(&reply.header),
-            questions: vec![],
+            header,
+            questions,
             resources: vec![],
         }
     }
@@ -35,7 +38,7 @@ impl DNSMessage {
 
     pub fn add_resource(&mut self, resource: ResourceRecord) -> &mut Self {
         self.resources.push(resource);
-        self.header.n_auth_res += 1;
+        self.header.n_answer += 1;
         self
     }
 
@@ -54,17 +57,26 @@ impl DNSMessage {
 
     pub fn parse(buff: Vec<u8>) -> Result<DNSMessage, *const str> {
         let mut message = Self::new();
-        message.header = Header::parse(&buff)?;
 
-        println!("Parse message: {:?}", message);
-        println!("BIN: {:0<8b}", message.header.flags);
-        println!("{:?}", message.header.get_qr());
-        println!("{:?}", message.header.get_opcode());
-        println!("{:?}", message.header.get_aa());
-        println!("{:?}", message.header.get_tc());
-        println!("{:?}", message.header.get_rd());
-        println!("{:?}", message.header.get_ra());
-        println!("{:?}", message.header.get_rcode());
+        let buff = &buff[..];
+        message.header = Header::parse(buff)?;
+
+        let mut buff = &buff[Header::SIZE..];
+        for _ in 0..message.header.n_question {
+            let (question, next_idx) = Question::parse(buff)?;
+            message.questions.push(question);
+            buff = &buff[next_idx..];
+        }
+
+        // println!("Parse message: {:?}", message);
+        // println!("BIN: {:0<8b}", message.header.flags);
+        // println!("{:?}", message.header.get_qr());
+        // println!("{:?}", message.header.get_opcode());
+        // println!("{:?}", message.header.get_aa());
+        // println!("{:?}", message.header.get_tc());
+        // println!("{:?}", message.header.get_rd());
+        // println!("{:?}", message.header.get_ra());
+        // println!("{:?}", message.header.get_rcode());
 
         Ok(message)
     }
