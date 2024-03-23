@@ -1,3 +1,6 @@
+use env_logger;
+use env_logger::Env;
+use log::{error, info, warn};
 use tokio;
 use tokio::signal;
 
@@ -13,6 +16,7 @@ const DINOSAURUST: &str = "
 
 #[tokio::main]
 async fn main() {
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     println!("{}", DINOSAURUST);
 
     let mut server = DNSServer::new();
@@ -20,11 +24,11 @@ async fn main() {
 
     match signal::ctrl_c().await {
         Ok(()) => {
-            println!("Get signal Ctrl+C");
+            warn!("Get signal Ctrl+C");
             server.stop().await;
         }
         Err(err) => {
-            eprintln!("Unable to listen for shutdown signal: {}", err);
+            error!("Unable to listen for shutdown signal: {}", err);
         }
     }
 }

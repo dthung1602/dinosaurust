@@ -4,9 +4,9 @@ use crate::resourserecord::ResourceRecord;
 
 #[derive(Debug)]
 pub struct DNSMessage {
-    header: Header,
-    questions: Vec<Question>,
-    resources: Vec<ResourceRecord>,
+    pub header: Header,
+    pub questions: Vec<Question>,
+    pub resources: Vec<ResourceRecord>,
 }
 
 impl DNSMessage {
@@ -67,16 +67,6 @@ impl DNSMessage {
             message.questions.push(question);
             buff = &buff[next_idx..];
         }
-
-        // println!("Parse message: {:?}", message);
-        // println!("BIN: {:0<8b}", message.header.flags);
-        // println!("{:?}", message.header.get_qr());
-        // println!("{:?}", message.header.get_opcode());
-        // println!("{:?}", message.header.get_aa());
-        // println!("{:?}", message.header.get_tc());
-        // println!("{:?}", message.header.get_rd());
-        // println!("{:?}", message.header.get_ra());
-        // println!("{:?}", message.header.get_rcode());
 
         Ok(message)
     }

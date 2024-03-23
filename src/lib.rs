@@ -1,16 +1,15 @@
 use std::io;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use log::{debug, info};
 
 use rand::prelude::*;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
 use config::Config;
-use question::Question;
 use resourserecord::ResourceRecord;
 
-use crate::common::FlagRecordType;
 use crate::message::DNSMessage;
 
 mod common;
@@ -37,7 +36,7 @@ impl DNSServer {
 
     pub async fn start(&mut self) -> io::Result<()> {
         let addr = self.cfg.socket_address_str();
-        println!("Started listening at {}", addr);
+        info!("Started listening at {}", addr);
 
         let sock = Arc::new(UdpSocket::bind(addr).await?);
         let (tx, mut rx) = mpsc::channel::<ResponsePair>(1024);
@@ -47,11 +46,11 @@ impl DNSServer {
         tokio::spawn(async move {
             while let Some((buff, addr)) = rx.recv().await {
                 let len = sock_clone.send_to(&buff[..], addr).await.unwrap();
-                println!("\nSent {len} bytes to {addr}:");
+                debug!("\nSent {len} bytes to {addr}:");
                 for x in &buff {
-                    print!("{:08b} ", x)
+                    debug!("{:08b} ", x)
                 }
-                println!("\n\n--------\n\n");
+                debug!("\n\n--------\n\n");
             }
         });
 
@@ -77,7 +76,7 @@ impl DNSServer {
 
     pub async fn stop(&mut self) {
         if let Some(tx) = &self.stoptx {
-            println!("Stopping server");
+            info!("Stopping server");
             tx.send(()).await.unwrap()
         }
     }
@@ -86,13 +85,21 @@ impl DNSServer {
 async fn handle_request(buff: Vec<u8>, tx: mpsc::Sender<ResponsePair>, addr: SocketAddr) {
     let request = DNSMessage::parse(buff).unwrap();
 
-    println!("\nGet request: {:?}", request);
+    debug!("\nGet request: {:?}", request);
+    debug!("Flags: {}", request.header.flags);
+    debug!("QR {:?}", request.header.get_qr());
+    debug!("OPCODE {:?}", request.header.get_opcode());
+    debug!("AA {:?}", request.header.get_aa());
+    debug!("TC {:?}", request.header.get_tc());
+    debug!("RD {:?}", request.header.get_rd());
+    debug!("RA {:?}", request.header.get_ra());
+    debug!("RC {:?}", request.header.get_rcode());
 
     let mut reply = DNSMessage::reply_to(&request);
     let record = ResourceRecord::new("www.google.com".to_string());
     reply.add_resource(record);
 
-    println!("\nReply: {:?}", reply);
+    debug!("\nReply: {:?}", reply);
 
     let res = reply.to_vec();
 
