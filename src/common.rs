@@ -130,17 +130,20 @@ impl ParseContext {
         }
     }
 
+    pub fn get_current_idx(&self) -> usize {
+        self.current_idx
+    }
+
     pub fn current_slice(&self) -> &[u8] {
         &self.root_buff[self.current_idx..]
     }
 
-    pub fn advance(&mut self, count: usize) -> &[u8] {
-        self.current_idx += count;
-        self.current_slice()
+    pub fn slice_from(&self, idx: usize) -> &[u8] {
+        &self.root_buff[idx..]
     }
 
-    pub fn move_to_idx(&mut self, idx: usize) -> &[u8] {
-        self.current_idx = idx;
+    pub fn advance(&mut self, count: usize) -> &[u8] {
+        self.current_idx += count;
         self.current_slice()
     }
 }
@@ -177,12 +180,18 @@ impl LabelSeq {
         Ok(LabelSeq { labels })
     }
 
-    // Return: Tuple(LabelSeq, next_index_of_buff_to_parse)
     pub fn parse(context: &mut ParseContext) -> Result<LabelSeq, *const str> {
         let buff = context.current_slice();
+        let (labels, parsed_bytes_count) = Self::parse_from_slice(buff, context);
+        context.advance(parsed_bytes_count);
+        Ok(LabelSeq{ labels: labels.unwrap() })
+    }
+
+    fn parse_from_slice(buff: &[u8], context: &ParseContext) -> (Result<Vec<String>, *const str>, usize) {
         let mut labels = vec![];
         let mut i = 0;
         let last_buff_idx = buff.len() - 1;
+        let current_idx = context.get_current_idx();
 
         loop {
             // Example:
@@ -190,23 +199,39 @@ impl LabelSeq {
             // | i |   |   |   |label_last_idx|
 
             if i > last_buff_idx {
-                return Err("cannot read label length");
+                return (Err("cannot read label length"), i)
             }
 
             let label_len = buff[i] as usize;
             if label_len == 0 {
-                context.advance(i + 1);
-                return Ok(LabelSeq { labels });
+                return (Ok(labels), i + 1)
             }
+
+            if label_len >> 6 == 0b11 {
+                if i + 1 > last_buff_idx {
+                    return (Err("cannot parse label pointer"), i + 1)
+                }
+
+                let pointer = (u16::from_be_bytes([buff[i], buff[i + 1]]) << 2 >> 2) as usize;
+                if pointer >= current_idx {
+                    return( Err("cannot reference to unparsed sequences"), i + 2)
+                }
+
+                let pointer_buff = context.slice_from(pointer);
+                let (rest_labels, _) = Self::parse_from_slice(pointer_buff, context);
+                let mut rest_labels = rest_labels.unwrap();
+
+                labels.append(&mut rest_labels);
+                return (Ok(labels), i + 2)
+            }
+
             if label_len > MAX_LABEL_LEN {
-                context.advance(i);
-                return Err("label is too long");
+                return (Err("label is too long"), i + 1);
             }
 
             let label_last_idx = i + label_len;
             if label_last_idx > last_buff_idx {
-                context.advance(i);
-                return Err("cannot read label");
+                return (Err("cannot read label"), i + 1);
             }
             let slice = Vec::from(&buff[i + 1..=label_last_idx]);
             let label = String::from_utf8(slice).unwrap();

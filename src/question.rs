@@ -26,7 +26,6 @@ impl Question {
         res
     }
 
-    // Return: (Question, next_index_of_buff_to_parse)
     pub fn parse(context: &mut ParseContext) -> Result<Question, *const str> {
         let label_seq = LabelSeq::parse(context)?;
 
