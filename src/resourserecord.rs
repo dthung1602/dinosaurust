@@ -1,7 +1,5 @@
 use std::net::Ipv4Addr;
 
-use bitflags::Flags;
-
 use crate::common::{FlagClassCode, FlagRecordType, LabelSeq};
 
 #[derive(Debug)]
@@ -23,7 +21,7 @@ impl ResourceRecord {
     pub fn new(raw_name: String) -> ResourceRecord {
         let ip = Ipv4Addr::new(1, 1, 1, 1);
         ResourceRecord {
-            name: LabelSeq::from_string(raw_name),
+            name: LabelSeq::from_string(raw_name).unwrap(),
             record_type: FlagRecordType::A.bits(),
             class_code: FlagClassCode::IN.bits(),
             ttl: 111,

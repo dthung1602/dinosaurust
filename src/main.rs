@@ -1,6 +1,6 @@
 use env_logger;
 use env_logger::Env;
-use log::{error, info, warn};
+use log::{error, warn};
 use tokio;
 use tokio::signal;
 

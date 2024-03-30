@@ -1,5 +1,4 @@
 use crate::common::{FlagClassCode, FlagRecordType, LabelSeq};
-use bitflags::Flags;
 
 #[derive(Debug, Clone)]
 pub struct Question {
@@ -11,7 +10,7 @@ pub struct Question {
 impl Question {
     pub fn new(raw_name: String, record_type: FlagRecordType) -> Question {
         Question {
-            name: LabelSeq::from_string(raw_name),
+            name: LabelSeq::from_string(raw_name).unwrap(),
             record_type: record_type.bits(),
             class_code: FlagClassCode::IN.bits(),
         }

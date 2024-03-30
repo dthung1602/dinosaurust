@@ -1,4 +1,4 @@
-use bitflags::{bitflags, Flags};
+use bitflags::bitflags;
 
 #[derive(Debug)]
 pub struct FlagQR(u16);
@@ -121,6 +121,8 @@ pub struct LabelSeq {
     labels: Vec<String>,
 }
 
+pub const MAX_LABEL_LEN: usize = 63;
+
 impl LabelSeq {
     pub fn to_vec(&self) -> Vec<u8> {
         let mut res = vec![];
@@ -133,10 +135,17 @@ impl LabelSeq {
         res
     }
 
-    pub fn from_string(s: String) -> LabelSeq {
-        LabelSeq {
-            labels: s.split('.').map(|s| s.to_string()).collect(),
+    pub fn from_string(s: String) -> Result<LabelSeq, *const str> {
+        let mut labels = vec![];
+
+        for part in s.split('.') {
+            if part.len() > MAX_LABEL_LEN {
+                return Err("label is too long");
+            }
+            labels.push(part.to_string());
         }
+
+        Ok(LabelSeq { labels })
     }
 
     // Return: Tuple(LabelSeq, next_index_of_buff_to_parse)
@@ -158,6 +167,9 @@ impl LabelSeq {
             if label_len == 0 {
                 let label_seq = LabelSeq { labels };
                 return Ok((label_seq, i + 1));
+            }
+            if label_len > MAX_LABEL_LEN {
+                return Err("label is too long");
             }
 
             let label_last_idx = i + label_len;

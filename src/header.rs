@@ -1,5 +1,3 @@
-use bitflags::Flags;
-
 use crate::common::*;
 
 #[derive(Debug)]
@@ -133,7 +131,7 @@ impl Header {
             1 => Ok(FlagRCode::FORMERR),
             2 => Ok(FlagRCode::SERVFAIL),
             3 => Ok(FlagRCode::NXDOMAIN),
-            _ => Err("Unsupported rcode flag"),
+            _ => Err("unsupported rcode flag"),
         }
     }
 
@@ -165,7 +163,7 @@ impl Header {
         };
 
         if buff.len() < 12 {
-            return Err("Header too short");
+            return Err("header too short");
         }
 
         header.flags = u16::from_be_bytes([buff[2], buff[3]]);

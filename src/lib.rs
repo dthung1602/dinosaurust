@@ -1,9 +1,10 @@
+#![allow(dead_code)]
+
+use log::{debug, info};
 use std::io;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use log::{debug, info};
 
-use rand::prelude::*;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
