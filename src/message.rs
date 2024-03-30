@@ -1,3 +1,4 @@
+use crate::common::ParseContext;
 use crate::header::Header;
 use crate::question::Question;
 use crate::resourserecord::ResourceRecord;
@@ -56,16 +57,14 @@ impl DNSMessage {
     }
 
     pub fn parse(buff: Vec<u8>) -> Result<DNSMessage, *const str> {
+        let mut context = ParseContext::new(buff);
         let mut message = Self::new();
 
-        let buff = &buff[..];
-        message.header = Header::parse(buff)?;
+        message.header = Header::parse(&mut context)?;
 
-        let mut buff = &buff[Header::SIZE..];
         for _ in 0..message.header.n_question {
-            let (question, next_idx) = Question::parse(buff)?;
+            let question = Question::parse(&mut context)?;
             message.questions.push(question);
-            buff = &buff[next_idx..];
         }
 
         Ok(message)

@@ -1,4 +1,4 @@
-use crate::common::{FlagClassCode, FlagRecordType, LabelSeq};
+use crate::common::{FlagClassCode, FlagRecordType, LabelSeq, ParseContext};
 
 #[derive(Debug, Clone)]
 pub struct Question {
@@ -27,20 +27,23 @@ impl Question {
     }
 
     // Return: (Question, next_index_of_buff_to_parse)
-    pub fn parse(buff: &[u8]) -> Result<(Question, usize), *const str> {
-        let (label_seq, next_idx) = LabelSeq::parse(buff)?;
-        if next_idx + 3 > buff.len() - 1 {
+    pub fn parse(context: &mut ParseContext) -> Result<Question, *const str> {
+        let label_seq = LabelSeq::parse(context)?;
+
+        let buff = context.current_slice();
+        if buff.len() < 4 {
             return Err("cannot read record type and class code");
         }
 
-        let record_type = u16::from_be_bytes([buff[next_idx], buff[next_idx + 1]]);
-        let class_code = u16::from_be_bytes([buff[next_idx + 2], buff[next_idx + 3]]);
+        let record_type = u16::from_be_bytes([buff[0], buff[1]]);
+        let class_code = u16::from_be_bytes([buff[2], buff[3]]);
         let question = Question {
             name: label_seq,
             record_type,
             class_code,
         };
 
-        Ok((question, next_idx + 4))
+        context.advance(4);
+        Ok(question)
     }
 }

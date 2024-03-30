@@ -152,7 +152,7 @@ impl Header {
         ]
     }
 
-    pub fn parse(buff: &[u8]) -> Result<Header, *const str> {
+    pub fn parse(context: &mut ParseContext) -> Result<Header, *const str> {
         let mut header = Header {
             id: 0,
             flags: 0,
@@ -162,7 +162,9 @@ impl Header {
             n_addi_rrs: 0,
         };
 
-        if buff.len() < 12 {
+        let buff = context.current_slice();
+
+        if buff.len() < Self::SIZE {
             return Err("header too short");
         }
 
@@ -175,6 +177,7 @@ impl Header {
         header.n_auth_res = u16::from_be_bytes([buff[8], buff[9]]);
         header.n_addi_rrs = u16::from_be_bytes([buff[10], buff[11]]);
 
+        context.advance(Self::SIZE);
         Ok(header)
     }
 

@@ -117,6 +117,35 @@ bitflags! {
 }
 
 #[derive(Debug, Clone)]
+pub struct ParseContext {
+    root_buff: Vec<u8>,
+    current_idx: usize,
+}
+
+impl ParseContext {
+    pub fn new(buff: Vec<u8>) -> ParseContext {
+        ParseContext {
+            root_buff: buff,
+            current_idx: 0,
+        }
+    }
+
+    pub fn current_slice(&self) -> &[u8] {
+        &self.root_buff[self.current_idx..]
+    }
+
+    pub fn advance(&mut self, count: usize) -> &[u8] {
+        self.current_idx += count;
+        self.current_slice()
+    }
+
+    pub fn move_to_idx(&mut self, idx: usize) -> &[u8] {
+        self.current_idx = idx;
+        self.current_slice()
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct LabelSeq {
     labels: Vec<String>,
 }
@@ -149,7 +178,8 @@ impl LabelSeq {
     }
 
     // Return: Tuple(LabelSeq, next_index_of_buff_to_parse)
-    pub fn parse(buff: &[u8]) -> Result<(LabelSeq, usize), *const str> {
+    pub fn parse(context: &mut ParseContext) -> Result<LabelSeq, *const str> {
+        let buff = context.current_slice();
         let mut labels = vec![];
         let mut i = 0;
         let last_buff_idx = buff.len() - 1;
@@ -165,15 +195,17 @@ impl LabelSeq {
 
             let label_len = buff[i] as usize;
             if label_len == 0 {
-                let label_seq = LabelSeq { labels };
-                return Ok((label_seq, i + 1));
+                context.advance(i + 1);
+                return Ok(LabelSeq { labels });
             }
             if label_len > MAX_LABEL_LEN {
+                context.advance(i);
                 return Err("label is too long");
             }
 
             let label_last_idx = i + label_len;
             if label_last_idx > last_buff_idx {
+                context.advance(i);
                 return Err("cannot read label");
             }
             let slice = Vec::from(&buff[i + 1..=label_last_idx]);
