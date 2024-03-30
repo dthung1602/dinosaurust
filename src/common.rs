@@ -184,10 +184,15 @@ impl LabelSeq {
         let buff = context.current_slice();
         let (labels, parsed_bytes_count) = Self::parse_from_slice(buff, context);
         context.advance(parsed_bytes_count);
-        Ok(LabelSeq{ labels: labels.unwrap() })
+        Ok(LabelSeq {
+            labels: labels.unwrap(),
+        })
     }
 
-    fn parse_from_slice(buff: &[u8], context: &ParseContext) -> (Result<Vec<String>, *const str>, usize) {
+    fn parse_from_slice(
+        buff: &[u8],
+        context: &ParseContext,
+    ) -> (Result<Vec<String>, *const str>, usize) {
         let mut labels = vec![];
         let mut i = 0;
         let last_buff_idx = buff.len() - 1;
@@ -199,22 +204,22 @@ impl LabelSeq {
             // | i |   |   |   |label_last_idx|
 
             if i > last_buff_idx {
-                return (Err("cannot read label length"), i)
+                return (Err("cannot read label length"), i);
             }
 
             let label_len = buff[i] as usize;
             if label_len == 0 {
-                return (Ok(labels), i + 1)
+                return (Ok(labels), i + 1);
             }
 
             if label_len >> 6 == 0b11 {
                 if i + 1 > last_buff_idx {
-                    return (Err("cannot parse label pointer"), i + 1)
+                    return (Err("cannot parse label pointer"), i + 1);
                 }
 
                 let pointer = (u16::from_be_bytes([buff[i], buff[i + 1]]) << 2 >> 2) as usize;
                 if pointer >= current_idx {
-                    return( Err("cannot reference to unparsed sequences"), i + 2)
+                    return (Err("cannot reference to unparsed sequences"), i + 2);
                 }
 
                 let pointer_buff = context.slice_from(pointer);
@@ -222,7 +227,7 @@ impl LabelSeq {
                 let mut rest_labels = rest_labels.unwrap();
 
                 labels.append(&mut rest_labels);
-                return (Ok(labels), i + 2)
+                return (Ok(labels), i + 2);
             }
 
             if label_len > MAX_LABEL_LEN {
