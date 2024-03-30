@@ -13,12 +13,12 @@ use resourserecord::ResourceRecord;
 
 use crate::message::DNSMessage;
 
-mod common;
-mod config;
-mod header;
-mod message;
-mod question;
-mod resourserecord;
+pub mod common;
+pub mod config;
+pub mod header;
+pub mod message;
+pub mod question;
+pub mod resourserecord;
 
 pub struct DNSServer {
     cfg: Config,

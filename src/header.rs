@@ -16,7 +16,7 @@ impl Header {
     pub fn new() -> Header {
         Header {
             id: rand::random(),
-            flags: 0,
+            flags: FlagQR::Q.bits(),
             n_question: 0,
             n_answer: 0,
             n_auth_res: 0,

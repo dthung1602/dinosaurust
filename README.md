@@ -13,7 +13,9 @@
 - [x] Write answer section
 - [x] Parse header
 - [x] Parse question section
-- [ ] Compress
+- [x] Compress
+  - [x] Parsing
+  - [ ] Writing
 - [ ] Forward to other server
 - [ ] Caching policy
 - [ ] Other record types: AAAA, CNAME, NS, etc
