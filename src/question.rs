@@ -16,7 +16,7 @@ impl Question {
         }
     }
 
-    pub fn serialize(&self, context: &mut SerializeContext){
+    pub fn serialize(&self, context: &mut SerializeContext) {
         self.name.serialize(context);
         context.push((self.record_type >> 8) as u8);
         context.push(self.record_type as u8);

@@ -30,7 +30,7 @@ impl ResourceRecord {
         }
     }
 
-    pub fn serialize(&self, context: &mut SerializeContext){
+    pub fn serialize(&self, context: &mut SerializeContext) {
         self.name.serialize(context);
 
         let mut rest = vec![

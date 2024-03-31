@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use bitflags::bitflags;
+use std::collections::HashMap;
 use std::string::String;
 
 #[derive(Debug)]
@@ -205,7 +205,7 @@ impl LabelSeq {
                 let val = (*idx as u16) | (0b11 << 14);
                 let val = val.to_be_bytes();
                 context.root_buff.extend_from_slice(&val);
-                return
+                return;
             } else {
                 context.set_pointer(key, context.root_buff.len());
                 let bytes = self.labels[i].as_bytes();
