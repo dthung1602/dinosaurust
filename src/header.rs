@@ -135,8 +135,8 @@ impl Header {
         }
     }
 
-    pub fn to_vec(&self) -> Vec<u8> {
-        vec![
+    pub fn serialize(&self, context: &mut SerializeContext) {
+        let mut val = vec![
             (self.id >> 8) as u8,
             self.id as u8,
             (self.flags >> 8) as u8,
@@ -149,7 +149,8 @@ impl Header {
             self.n_auth_res as u8,
             (self.n_addi_rrs >> 8) as u8,
             self.n_addi_rrs as u8,
-        ]
+        ];
+        context.append(&mut val)
     }
 
     pub fn parse(context: &mut ParseContext) -> Result<Header, *const str> {

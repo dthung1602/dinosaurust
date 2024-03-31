@@ -1,4 +1,6 @@
+use std::collections::HashMap;
 use bitflags::bitflags;
+use std::string::String;
 
 #[derive(Debug)]
 pub struct FlagQR(u16);
@@ -149,6 +151,45 @@ impl ParseContext {
 }
 
 #[derive(Debug, Clone)]
+pub struct SerializeContext {
+    root_buff: Vec<u8>,
+    label_locations: HashMap<String, usize>,
+}
+
+impl SerializeContext {
+    pub fn new() -> SerializeContext {
+        SerializeContext {
+            root_buff: vec![],
+            label_locations: HashMap::new(),
+        }
+    }
+
+    pub fn get_labels_key(labels: &[String]) -> String {
+        labels.join(".")
+    }
+
+    pub fn get_pointer(&self, key: &String) -> Option<&usize> {
+        self.label_locations.get(key)
+    }
+
+    pub fn set_pointer(&mut self, key: String, idx: usize) -> Option<usize> {
+        self.label_locations.insert(key, idx)
+    }
+
+    pub fn to_vec(&self) -> Vec<u8> {
+        self.root_buff.clone()
+    }
+
+    pub fn append(&mut self, other: &mut Vec<u8>) {
+        self.root_buff.append(other)
+    }
+
+    pub fn push(&mut self, value: u8) {
+        self.root_buff.push(value)
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct LabelSeq {
     labels: Vec<String>,
 }
@@ -156,15 +197,24 @@ pub struct LabelSeq {
 pub const MAX_LABEL_LEN: usize = 63;
 
 impl LabelSeq {
-    pub fn to_vec(&self) -> Vec<u8> {
-        let mut res = vec![];
-        for label in &self.labels {
-            let bytes = label.as_bytes();
-            let len = bytes.len() as u8;
-            res.push(len);
-            res.extend_from_slice(bytes);
+    pub fn serialize(&self, context: &mut SerializeContext) {
+        for i in 0..self.labels.len() {
+            let s = &self.labels[i..];
+            let key = SerializeContext::get_labels_key(s);
+            if let Some(idx) = context.get_pointer(&key) {
+                let val = (*idx as u16) | (0b11 << 14);
+                let val = val.to_be_bytes();
+                context.root_buff.extend_from_slice(&val);
+                return
+            } else {
+                context.set_pointer(key, context.root_buff.len());
+                let bytes = self.labels[i].as_bytes();
+                let len = bytes.len() as u8;
+                context.root_buff.push(len);
+                context.root_buff.extend_from_slice(bytes);
+            }
         }
-        res
+        context.root_buff.push(0);
     }
 
     pub fn from_string(s: String) -> Result<LabelSeq, *const str> {

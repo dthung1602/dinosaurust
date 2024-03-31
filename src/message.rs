@@ -1,4 +1,4 @@
-use crate::common::ParseContext;
+use crate::common::{ParseContext, SerializeContext};
 use crate::header::Header;
 use crate::question::Question;
 use crate::resourserecord::ResourceRecord;
@@ -43,17 +43,17 @@ impl DNSMessage {
         self
     }
 
-    pub fn to_vec(&self) -> Vec<u8> {
-        let mut res = self.header.to_vec();
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut context = SerializeContext::new();
+        self.header.serialize(&mut context);
         for q in &self.questions {
-            let mut v = q.to_vec();
-            res.append(&mut v);
+            q.serialize(&mut context);
         }
         for r in &self.resources {
-            let mut v = r.to_vec();
-            res.append(&mut v);
+            r.serialize(&mut context);
         }
-        res
+
+        context.to_vec()
     }
 
     pub fn parse(buff: Vec<u8>) -> Result<DNSMessage, *const str> {

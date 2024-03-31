@@ -15,11 +15,12 @@ const DINOSAURUST_ADDRESS: &str = "127.0.0.1:2053";
 async fn main() -> io::Result<()> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-    let q1 = Question::new("www.google.com".to_string(), FlagRecordType::A);
-    let q2 = Question::new("google.com".to_string(), FlagRecordType::A);
     let mut msg = DNSMessage::new();
-    msg.add_question(q1).add_question(q2);
-    let msg_data = &msg.to_vec()[..];
+    let q1 = Question::new("www.google.com".to_string(), FlagRecordType::A);
+    msg.add_question(q1);
+    let q2 = Question::new("google.com".to_string(), FlagRecordType::A);
+    msg.add_question(q2);
+    let msg_data = &msg.serialize()[..];
 
     info!("Sending request from {SENDING_SOCKET} to {DINOSAURUST_ADDRESS}");
     let socket = UdpSocket::bind(SENDING_SOCKET).await.unwrap();

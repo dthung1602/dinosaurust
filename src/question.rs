@@ -1,4 +1,4 @@
-use crate::common::{FlagClassCode, FlagRecordType, LabelSeq, ParseContext};
+use crate::common::{FlagClassCode, FlagRecordType, LabelSeq, ParseContext, SerializeContext};
 
 #[derive(Debug, Clone)]
 pub struct Question {
@@ -16,14 +16,12 @@ impl Question {
         }
     }
 
-    pub fn to_vec(&self) -> Vec<u8> {
-        let mut res = self.name.to_vec();
-        res.push(0);
-        res.push((self.record_type >> 8) as u8);
-        res.push(self.record_type as u8);
-        res.push((self.class_code >> 8) as u8);
-        res.push(self.class_code as u8);
-        res
+    pub fn serialize(&self, context: &mut SerializeContext){
+        self.name.serialize(context);
+        context.push((self.record_type >> 8) as u8);
+        context.push(self.record_type as u8);
+        context.push((self.class_code >> 8) as u8);
+        context.push(self.class_code as u8);
     }
 
     pub fn parse(context: &mut ParseContext) -> Result<Question, *const str> {

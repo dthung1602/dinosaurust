@@ -97,12 +97,16 @@ async fn handle_request(buff: Vec<u8>, tx: mpsc::Sender<ResponsePair>, addr: Soc
     debug!("RC {:?}", request.header.get_rcode());
 
     let mut reply = DNSMessage::reply_to(&request);
+    let record = ResourceRecord::new("example.com".to_string());
+    reply.add_resource(record);
+    let record = ResourceRecord::new("google.com".to_string());
+    reply.add_resource(record);
     let record = ResourceRecord::new("www.google.com".to_string());
     reply.add_resource(record);
 
     debug!("\nReply: {:?}", reply);
 
-    let res = reply.to_vec();
+    let res = reply.serialize();
 
     tx.send((res, addr)).await.unwrap()
 }

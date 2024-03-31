@@ -1,6 +1,6 @@
 use std::net::Ipv4Addr;
 
-use crate::common::{FlagClassCode, FlagRecordType, LabelSeq};
+use crate::common::{FlagClassCode, FlagRecordType, LabelSeq, SerializeContext};
 
 #[derive(Debug)]
 enum ResourceData {
@@ -30,11 +30,10 @@ impl ResourceRecord {
         }
     }
 
-    pub fn to_vec(&self) -> Vec<u8> {
-        let mut res = self.name.to_vec();
+    pub fn serialize(&self, context: &mut SerializeContext){
+        self.name.serialize(context);
 
         let mut rest = vec![
-            0,
             (self.record_type >> 8) as u8,
             self.record_type as u8,
             (self.class_code >> 8) as u8,
@@ -46,15 +45,13 @@ impl ResourceRecord {
             (self.length >> 8) as u8,
             self.length as u8,
         ];
-        res.append(&mut rest);
+        context.append(&mut rest);
 
         match self.data {
             ResourceData::A(ip) => {
                 let mut ip = ip.octets().to_vec();
-                res.append(&mut ip)
+                context.append(&mut ip)
             }
         }
-
-        res
     }
 }
