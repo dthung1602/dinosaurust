@@ -15,8 +15,8 @@
 - [x] Parse question section
 - [x] Compress
   - [x] Parsing
-  - [ ] Writing
-- [ ] Forward to other server
+  - [x] Writing
+- [x] Forward to other server
 - [ ] Caching policy
 - [ ] Other record types: AAAA, CNAME, NS, etc
 - [ ] Maintain own database

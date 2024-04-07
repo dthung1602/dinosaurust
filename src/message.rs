@@ -1,4 +1,4 @@
-use crate::common::{ParseContext, SerializeContext};
+use crate::common::{FlagRA, FlagRD, ParseContext, SerializeContext};
 use crate::header::Header;
 use crate::question::Question;
 use crate::resourserecord::ResourceRecord;
@@ -21,6 +21,8 @@ impl DNSMessage {
 
     pub fn reply_to(request: &DNSMessage) -> DNSMessage {
         let mut header = Header::reply_to(&request.header);
+        header.set_rd(FlagRD::TRUE);
+        header.set_ra(FlagRA::TRUE);
         let questions = request.questions.clone();
         header.n_question = questions.len() as u16;
 
@@ -65,6 +67,11 @@ impl DNSMessage {
         for _ in 0..message.header.n_question {
             let question = Question::parse(&mut context)?;
             message.questions.push(question);
+        }
+
+        for _ in 0..message.header.n_answer {
+            let resource = ResourceRecord::parse(&mut context)?;
+            message.resources.push(resource);
         }
 
         Ok(message)

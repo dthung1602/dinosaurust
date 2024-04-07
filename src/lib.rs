@@ -1,10 +1,10 @@
 #![allow(dead_code)]
 
-use log::{debug, info};
 use std::io;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use log::{debug, info};
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
@@ -19,6 +19,8 @@ pub mod header;
 pub mod message;
 pub mod question;
 pub mod resourserecord;
+pub mod forwarder;
+mod utils;
 
 pub struct DNSServer {
     cfg: Config,
@@ -60,6 +62,7 @@ impl DNSServer {
         self.stoptx = Some(stoptx);
 
         // Task to accept UDP datagram
+        let cfg = self.cfg.clone();
         tokio::spawn(async move {
             loop {
                 if let Ok(_) = stoprx.try_recv() {
@@ -68,7 +71,8 @@ impl DNSServer {
                 let mut buff = vec![0; 1024];
                 let (_len, peer_addr) = sock.recv_from(&mut buff).await.unwrap();
                 let tx_clone = tx.clone();
-                tokio::spawn(async move { handle_request(buff, tx_clone, peer_addr).await });
+                let cfg = cfg.clone();
+                tokio::spawn(async move { handle_request(cfg, buff, tx_clone, peer_addr).await });
             }
         });
 
@@ -83,7 +87,7 @@ impl DNSServer {
     }
 }
 
-async fn handle_request(buff: Vec<u8>, tx: mpsc::Sender<ResponsePair>, addr: SocketAddr) {
+async fn handle_request(cfg: Config, buff: Vec<u8>, tx: mpsc::Sender<ResponsePair>, addr: SocketAddr) {
     let request = DNSMessage::parse(buff).unwrap();
 
     debug!("\nGet request: {:?}", request);
@@ -96,13 +100,12 @@ async fn handle_request(buff: Vec<u8>, tx: mpsc::Sender<ResponsePair>, addr: Soc
     debug!("RA {:?}", request.header.get_ra());
     debug!("RC {:?}", request.header.get_rcode());
 
+    let res = forwarder::forward_recursive(request.questions[0].clone(), &cfg).await.unwrap();
+
     let mut reply = DNSMessage::reply_to(&request);
-    let record = ResourceRecord::new("example.com".to_string());
-    reply.add_resource(record);
-    let record = ResourceRecord::new("google.com".to_string());
-    reply.add_resource(record);
-    let record = ResourceRecord::new("www.google.com".to_string());
-    reply.add_resource(record);
+    for resource in res.resources {
+        reply.add_resource(resource);
+    }
 
     debug!("\nReply: {:?}", reply);
 

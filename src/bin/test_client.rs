@@ -1,14 +1,14 @@
 use std::io;
+use std::net::Ipv4Addr;
 
 use env_logger::Env;
 use log::info;
 use tokio::net::UdpSocket;
 
-use dinosaurust::common::FlagRecordType;
+use dinosaurust::common::{FlagRA, FlagRD, FlagRecordType};
 use dinosaurust::message::DNSMessage;
 use dinosaurust::question::Question;
 
-const SENDING_SOCKET: &str = "127.0.0.1:11153";
 const DINOSAURUST_ADDRESS: &str = "127.0.0.1:2053";
 
 #[tokio::main]
@@ -16,14 +16,16 @@ async fn main() -> io::Result<()> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
     let mut msg = DNSMessage::new();
+    msg.header.set_rd(FlagRD::TRUE);
+
     let q1 = Question::new("www.google.com".to_string(), FlagRecordType::A);
     msg.add_question(q1);
     let q2 = Question::new("google.com".to_string(), FlagRecordType::A);
     msg.add_question(q2);
     let msg_data = &msg.serialize()[..];
 
-    info!("Sending request from {SENDING_SOCKET} to {DINOSAURUST_ADDRESS}");
-    let socket = UdpSocket::bind(SENDING_SOCKET).await.unwrap();
+    info!("Sending request to {DINOSAURUST_ADDRESS}");
+    let socket = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).await.unwrap();
     socket
         .send_to(&msg_data, DINOSAURUST_ADDRESS)
         .await

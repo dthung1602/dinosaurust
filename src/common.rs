@@ -83,26 +83,17 @@ bitflags! {
 }
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub struct FlagRecordType(u16);
 
 bitflags! {
     impl FlagRecordType: u16 {
         const A = 1;
         const NS = 2;
-        const MD = 3;
-        const MF = 4;
         const CNAME = 5;
-        const SOA = 6;
-        const MB = 7;
-        const MG = 8;
-        const MR = 9;
-        const NULL = 10;
-        const KWS = 11;
-        const PTR = 12;
-        const HINFO = 13;
-        const MINFO = 14;
-        const MX = 15;
-        const TXT = 16;
+        // TODO const SOA = 6;
+        // TODO const MX = 15;
+        const AAAA = 28;
     }
 }
 
@@ -132,7 +123,7 @@ impl ParseContext {
         }
     }
 
-    pub fn get_current_idx(&self) -> usize {
+    pub fn current_idx(&self) -> usize {
         self.current_idx
     }
 
@@ -197,6 +188,10 @@ pub struct LabelSeq {
 pub const MAX_LABEL_LEN: usize = 63;
 
 impl LabelSeq {
+    pub fn new() -> LabelSeq {
+        LabelSeq { labels: vec![] }
+    }
+
     pub fn serialize(&self, context: &mut SerializeContext) {
         for i in 0..self.labels.len() {
             let s = &self.labels[i..];
@@ -246,7 +241,7 @@ impl LabelSeq {
         let mut labels = vec![];
         let mut i = 0;
         let last_buff_idx = buff.len() - 1;
-        let current_idx = context.get_current_idx();
+        let current_idx = context.current_idx();
 
         loop {
             // Example:

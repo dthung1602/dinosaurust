@@ -36,7 +36,7 @@ impl Header {
         header.set_qr(FlagQR::R);
         header.set_aa(FlagAA::FALSE);
         header.set_tc(FlagTC::FALSE);
-        header.set_ra(FlagRA::TRUE); // TODO support this
+        header.set_ra(FlagRA::TRUE);
 
         header
     }
