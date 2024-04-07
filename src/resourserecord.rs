@@ -1,7 +1,7 @@
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 use crate::common::{FlagClassCode, FlagRecordType, LabelSeq, ParseContext, SerializeContext};
-use crate::utils::{pop};
+use crate::utils::pop;
 
 #[derive(Debug)]
 enum ResourceData {
@@ -60,9 +60,7 @@ impl ResourceRecord {
                 let mut ip = ip.octets().to_vec();
                 context.append(&mut ip)
             }
-            ResourceData::NS(seq) | ResourceData::CNAME(seq) => {
-                seq.serialize(context)
-            }
+            ResourceData::NS(seq) | ResourceData::CNAME(seq) => seq.serialize(context),
         }
     }
 
@@ -76,11 +74,13 @@ impl ResourceRecord {
         }
 
         let flag = u16::from_be_bytes([data[0], data[1]]);
-        let record_type: FlagRecordType = FlagRecordType::from_bits(flag).expect("cannot parse record type");
+        let record_type: FlagRecordType =
+            FlagRecordType::from_bits(flag).expect("cannot parse record type");
         resource.record_type = record_type.bits();
 
         let flag = u16::from_be_bytes([data[2], data[3]]);
-        let class_code: FlagClassCode = FlagClassCode::from_bits(flag).expect("cannot parse class code");
+        let class_code: FlagClassCode =
+            FlagClassCode::from_bits(flag).expect("cannot parse class code");
         resource.class_code = class_code.bits();
 
         resource.ttl = u32::from_be_bytes([data[4], data[5], data[6], data[7]]);
@@ -92,7 +92,11 @@ impl ResourceRecord {
         Ok(resource)
     }
 
-    fn parse_data(context: &mut ParseContext, record_type: FlagRecordType, size: usize) -> Result<ResourceData, *const str> {
+    fn parse_data(
+        context: &mut ParseContext,
+        record_type: FlagRecordType,
+        size: usize,
+    ) -> Result<ResourceData, *const str> {
         let buff = context.current_slice();
         if buff.len() < size {
             return Err("cannot parse resource data");

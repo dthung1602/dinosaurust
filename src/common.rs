@@ -82,8 +82,7 @@ bitflags! {
     }
 }
 
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct FlagRecordType(u16);
 
 bitflags! {

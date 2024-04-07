@@ -15,11 +15,11 @@ use crate::message::DNSMessage;
 
 pub mod common;
 pub mod config;
+pub mod forwarder;
 pub mod header;
 pub mod message;
 pub mod question;
 pub mod resourserecord;
-pub mod forwarder;
 mod utils;
 
 pub struct DNSServer {
@@ -87,7 +87,12 @@ impl DNSServer {
     }
 }
 
-async fn handle_request(cfg: Config, buff: Vec<u8>, tx: mpsc::Sender<ResponsePair>, addr: SocketAddr) {
+async fn handle_request(
+    cfg: Config,
+    buff: Vec<u8>,
+    tx: mpsc::Sender<ResponsePair>,
+    addr: SocketAddr,
+) {
     let request = DNSMessage::parse(buff).unwrap();
 
     debug!("\nGet request: {:?}", request);
@@ -100,7 +105,9 @@ async fn handle_request(cfg: Config, buff: Vec<u8>, tx: mpsc::Sender<ResponsePai
     debug!("RA {:?}", request.header.get_ra());
     debug!("RC {:?}", request.header.get_rcode());
 
-    let res = forwarder::forward_recursive(request.questions[0].clone(), &cfg).await.unwrap();
+    let res = forwarder::forward_recursive(request.questions[0].clone(), &cfg)
+        .await
+        .unwrap();
 
     let mut reply = DNSMessage::reply_to(&request);
     for resource in res.resources {

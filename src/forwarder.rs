@@ -14,7 +14,10 @@ pub async fn forward_recursive(question: Question, config: &Config) -> io::Resul
 
     let raw_data = &msg.serialize()[..];
 
-    let upstream_server = format!("{}:{}", config.forward_server_ip, config.forward_server_port);
+    let upstream_server = format!(
+        "{}:{}",
+        config.forward_server_ip, config.forward_server_port
+    );
     info!("Forwarding to server at {upstream_server}");
 
     let socket = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).await.unwrap();
