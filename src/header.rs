@@ -37,6 +37,8 @@ impl Header {
         header.set_aa(FlagAA::FALSE);
         header.set_tc(FlagTC::FALSE);
         header.set_ra(FlagRA::TRUE);
+        header.set_rd(FlagRD::TRUE);
+        header.set_ra(FlagRA::TRUE);
 
         header
     }

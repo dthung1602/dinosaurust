@@ -3,23 +3,82 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 use crate::common::{FlagClassCode, FlagRecordType, LabelSeq, ParseContext, SerializeContext};
 use crate::utils::pop;
 
-#[derive(Debug)]
-enum ResourceData {
+#[derive(Debug, Clone)]
+pub struct SOARecord {
+    mname: LabelSeq,
+    rname: LabelSeq,
+    serial: u32,
+    refresh: u32,
+    retry: u32,
+    expire: u32,
+    minimum: u32,
+}
+
+const SOA_FIXED_SIZE: usize = 20;
+
+impl SOARecord {
+    pub fn serialize(&self, context: &mut SerializeContext) {
+        self.mname.serialize(context);
+        self.rname.serialize(context);
+
+        let bytes = self.serial.to_be_bytes();
+        context.extend_from_slice(&bytes);
+
+        let bytes = self.refresh.to_be_bytes();
+        context.extend_from_slice(&bytes);
+
+        let bytes = self.retry.to_be_bytes();
+        context.extend_from_slice(&bytes);
+
+        let bytes = self.expire.to_be_bytes();
+        context.extend_from_slice(&bytes);
+
+        let bytes = self.minimum.to_be_bytes();
+        context.extend_from_slice(&bytes);
+    }
+
+    pub fn parse(context: &mut ParseContext) -> Result<SOARecord, *const str> {
+        let mname = LabelSeq::parse(context)?;
+        let rname = LabelSeq::parse(context)?;
+
+        let slice = context.current_slice();
+        if slice.len() < SOA_FIXED_SIZE {
+            return Err("cannot parse SOA record");
+        }
+
+        let record = SOARecord {
+            mname,
+            rname,
+            serial: u32::from_be_bytes(pop(&slice[0..4])),
+            refresh: u32::from_be_bytes(pop(&slice[4..8])),
+            retry: u32::from_be_bytes(pop(&slice[8..12])),
+            expire: u32::from_be_bytes(pop(&slice[12..16])),
+            minimum: u32::from_be_bytes(pop(&slice[16..20])),
+        };
+        context.advance(SOA_FIXED_SIZE);
+
+        Ok(record)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ResourceData {
     A(Ipv4Addr),
     NS(LabelSeq),
     CNAME(LabelSeq),
     AAAA(Ipv6Addr),
+    SOA(SOARecord),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ResourceRecord {
-    name: LabelSeq,
+    pub name: LabelSeq,
     // TODO store enum instead of int?
-    record_type: u16,
-    class_code: u16,
-    ttl: u32,
-    length: u16,
-    data: ResourceData,
+    pub record_type: u16,
+    pub class_code: u16,
+    pub ttl: u32,
+    pub length: u16,
+    pub data: ResourceData,
 }
 
 impl ResourceRecord {
@@ -60,6 +119,7 @@ impl ResourceRecord {
                 let mut ip = ip.octets().to_vec();
                 context.append(&mut ip)
             }
+            ResourceData::SOA(soa) => soa.serialize(context),
             ResourceData::NS(seq) | ResourceData::CNAME(seq) => seq.serialize(context),
         }
     }
@@ -121,16 +181,23 @@ impl ResourceRecord {
                 context.advance(16);
                 ResourceData::AAAA(ip)
             }
+            FlagRecordType::SOA => {
+                let soa = SOARecord::parse(context)?;
+                if context.current_idx() != max_index {
+                    return Err("sequence in record exceed specified length");
+                }
+                ResourceData::SOA(soa)
+            }
             FlagRecordType::NS => {
                 let seq = LabelSeq::parse(context)?;
-                if context.current_idx() > max_index {
+                if context.current_idx() != max_index {
                     return Err("sequence in record exceed specified length");
                 }
                 ResourceData::NS(seq)
             }
             FlagRecordType::CNAME => {
                 let seq = LabelSeq::parse(context)?;
-                if context.current_idx() > max_index {
+                if context.current_idx() != max_index {
                     return Err("sequence in record exceed specified length");
                 }
                 ResourceData::CNAME(seq)

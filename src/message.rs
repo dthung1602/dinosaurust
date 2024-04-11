@@ -1,36 +1,45 @@
-use crate::common::{FlagRA, FlagRD, ParseContext, SerializeContext};
+use crate::common::{ParseContext, SerializeContext};
 use crate::header::Header;
 use crate::question::Question;
 use crate::resourserecord::ResourceRecord;
 
 #[derive(Debug)]
-pub struct DNSMessage {
+pub struct Message {
     pub header: Header,
     pub questions: Vec<Question>,
     pub resources: Vec<ResourceRecord>,
+    pub auth_resources: Vec<ResourceRecord>, // all must be of type SOA
 }
 
-impl DNSMessage {
-    pub fn new() -> DNSMessage {
-        DNSMessage {
+impl Message {
+    pub fn new() -> Message {
+        Message {
             header: Header::new(),
             questions: vec![],
             resources: vec![],
+            auth_resources: vec![],
         }
     }
 
-    pub fn reply_to(request: &DNSMessage) -> DNSMessage {
+    pub fn reply_to(request: &Message) -> Message {
         let mut header = Header::reply_to(&request.header);
-        header.set_rd(FlagRD::TRUE);
-        header.set_ra(FlagRA::TRUE);
+
         let questions = request.questions.clone();
         header.n_question = questions.len() as u16;
 
-        DNSMessage {
+        Message {
             header,
             questions,
             resources: vec![],
+            auth_resources: vec![],
         }
+    }
+
+    pub fn copy_resources(&mut self, other: &Self) {
+        self.header.n_answer = other.header.n_answer;
+        self.header.n_auth_res = other.header.n_auth_res;
+        self.resources = other.resources.clone();
+        self.auth_resources = other.auth_resources.clone();
     }
 
     pub fn add_question(&mut self, question: Question) -> &mut Self {
@@ -54,11 +63,14 @@ impl DNSMessage {
         for r in &self.resources {
             r.serialize(&mut context);
         }
+        for r in &self.auth_resources {
+            r.serialize(&mut context);
+        }
 
         context.to_vec()
     }
 
-    pub fn parse(buff: Vec<u8>) -> Result<DNSMessage, *const str> {
+    pub fn parse(buff: Vec<u8>) -> Result<Message, *const str> {
         let mut context = ParseContext::new(buff);
         let mut message = Self::new();
 
@@ -72,6 +84,11 @@ impl DNSMessage {
         for _ in 0..message.header.n_answer {
             let resource = ResourceRecord::parse(&mut context)?;
             message.resources.push(resource);
+        }
+
+        for _ in 0..message.header.n_auth_res {
+            let resource = ResourceRecord::parse(&mut context)?;
+            message.auth_resources.push(resource);
         }
 
         Ok(message)

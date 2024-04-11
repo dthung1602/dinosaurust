@@ -4,7 +4,7 @@ use log::{error, warn};
 use tokio;
 use tokio::signal;
 
-use dinosaurust::DNSServer;
+use dinosaurust::DinosaurustServer;
 
 const DINOSAURUST: &str = "
     ____  _                                              __
@@ -19,7 +19,7 @@ async fn main() {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     println!("{}", DINOSAURUST);
 
-    let mut server = DNSServer::new();
+    let mut server = DinosaurustServer::new();
     server.start().await.unwrap();
 
     match signal::ctrl_c().await {

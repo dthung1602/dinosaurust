@@ -1,5 +1,6 @@
 use bitflags::bitflags;
 use std::collections::HashMap;
+use std::net::{Ipv4Addr, Ipv6Addr};
 use std::string::String;
 
 #[derive(Debug)]
@@ -90,7 +91,7 @@ bitflags! {
         const A = 1;
         const NS = 2;
         const CNAME = 5;
-        // TODO const SOA = 6;
+        const SOA = 6;
         // TODO const MX = 15;
         const AAAA = 28;
     }
@@ -177,6 +178,10 @@ impl SerializeContext {
     pub fn push(&mut self, value: u8) {
         self.root_buff.push(value)
     }
+
+    pub fn extend_from_slice(&mut self, value: &[u8]) {
+        self.root_buff.extend_from_slice(value)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -211,7 +216,7 @@ impl LabelSeq {
         context.root_buff.push(0);
     }
 
-    pub fn from_string(s: String) -> Result<LabelSeq, *const str> {
+    pub fn from_string(s: &str) -> Result<LabelSeq, *const str> {
         let mut labels = vec![];
 
         for part in s.split('.') {
@@ -288,5 +293,45 @@ impl LabelSeq {
 
             i = label_last_idx + 1;
         }
+    }
+}
+
+pub struct DNSServer {
+    name: LabelSeq,
+    ipv4addr: Ipv4Addr,
+    ipv6addr: Ipv6Addr,
+}
+
+macro_rules! create_dns_servers {
+    ($( ($name:expr, $ipv4:expr, $ipv6:expr), )*) => {
+        vec![
+            $(
+                DNSServer {
+                    name: LabelSeq::from_string($name).unwrap(),
+                    ipv4addr: $ipv4.parse().unwrap(),
+                    ipv6addr: $ipv6.parse().unwrap(),
+                },
+            )*
+        ]
+    };
+}
+
+impl DNSServer {
+    pub fn root_servers() -> Vec<DNSServer> {
+        create_dns_servers!(
+            ("a.root-servers.net", "198.41.0.4", "2001:503:ba3e::2:30"),
+            ("b.root-servers.net", "170.247.170.2", "2801:1b8:10::b"),
+            ("c.root-servers.net", "192.33.4.12", "2001:500:2::c"),
+            ("d.root-servers.net", "199.7.91.13", "2001:500:2d::d"),
+            ("e.root-servers.net", "192.203.230.10", "2001:500:a8::e"),
+            ("f.root-servers.net", "192.5.5.241", "2001:500:2f::f"),
+            ("g.root-servers.net", "192.112.36.4", "2001:500:12::d0d"),
+            ("h.root-servers.net", "198.97.190.53", "2001:500:1::53"),
+            ("i.root-servers.net", "192.36.148.17", "2001:7fe::53"),
+            ("j.root-servers.net", "192.58.128.30", "2001:503:c27::2:30"),
+            ("k.root-servers.net", "193.0.14.129", "2001:7fd::1"),
+            ("l.root-servers.net", "199.7.83.42", "2001:500:9f::42"),
+            ("m.root-servers.net", "202.12.27.33", "2001:dc3::35"),
+        )
     }
 }

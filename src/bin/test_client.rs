@@ -5,8 +5,8 @@ use env_logger::Env;
 use log::info;
 use tokio::net::UdpSocket;
 
-use dinosaurust::common::{FlagRA, FlagRD, FlagRecordType};
-use dinosaurust::message::DNSMessage;
+use dinosaurust::common::{FlagRD, FlagRecordType};
+use dinosaurust::message::Message;
 use dinosaurust::question::Question;
 
 const DINOSAURUST_ADDRESS: &str = "127.0.0.1:2053";
@@ -15,13 +15,13 @@ const DINOSAURUST_ADDRESS: &str = "127.0.0.1:2053";
 async fn main() -> io::Result<()> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-    let mut msg = DNSMessage::new();
+    let mut msg = Message::new();
     msg.header.set_rd(FlagRD::TRUE);
 
-    let q1 = Question::new("www.google.com".to_string(), FlagRecordType::A);
+    let q1 = Question::new("www.google.com".to_string(), FlagRecordType::NS);
     msg.add_question(q1);
-    let q2 = Question::new("google.com".to_string(), FlagRecordType::A);
-    msg.add_question(q2);
+    // let q2 = Question::new("google.com".to_string(), FlagRecordType::A);
+    // msg.add_question(q2);
     let msg_data = &msg.serialize()[..];
 
     info!("Sending request to {DINOSAURUST_ADDRESS}");
@@ -35,7 +35,7 @@ async fn main() -> io::Result<()> {
     let msg_size = socket.recv(&mut buff).await.unwrap();
     info!("Received {msg_size} bytes");
 
-    let reply = DNSMessage::parse(buff).unwrap();
+    let reply = Message::parse(buff).unwrap();
     info!("Get reply {:?}", reply);
 
     Ok(())

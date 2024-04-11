@@ -5,11 +5,11 @@ use log::info;
 use tokio::net::UdpSocket;
 
 use crate::config::Config;
-use crate::message::DNSMessage;
+use crate::message::Message;
 use crate::question::Question;
 
-pub async fn forward_recursive(question: Question, config: &Config) -> io::Result<DNSMessage> {
-    let mut msg = DNSMessage::new();
+pub async fn forward_recursive(question: Question, config: &Config) -> io::Result<Message> {
+    let mut msg = Message::new();
     msg.add_question(question);
 
     let raw_data = &msg.serialize()[..];
@@ -28,7 +28,7 @@ pub async fn forward_recursive(question: Question, config: &Config) -> io::Resul
     let msg_size = socket.recv(&mut buff).await.unwrap();
     info!("Received {msg_size} bytes");
 
-    let reply = DNSMessage::parse(buff).unwrap();
+    let reply = Message::parse(buff).unwrap();
     info!("Get reply {:?}", reply);
 
     Ok(reply)

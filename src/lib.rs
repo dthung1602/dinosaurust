@@ -9,9 +9,8 @@ use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
 use config::Config;
-use resourserecord::ResourceRecord;
 
-use crate::message::DNSMessage;
+use crate::message::Message;
 
 pub mod common;
 pub mod config;
@@ -22,16 +21,16 @@ pub mod question;
 pub mod resourserecord;
 mod utils;
 
-pub struct DNSServer {
+pub struct DinosaurustServer {
     cfg: Config,
     stoptx: Option<mpsc::Sender<()>>,
 }
 
 type ResponsePair = (Vec<u8>, SocketAddr);
 
-impl DNSServer {
-    pub fn new() -> DNSServer {
-        DNSServer {
+impl DinosaurustServer {
+    pub fn new() -> DinosaurustServer {
+        DinosaurustServer {
             cfg: config::load_config(),
             stoptx: None,
         }
@@ -93,7 +92,7 @@ async fn handle_request(
     tx: mpsc::Sender<ResponsePair>,
     addr: SocketAddr,
 ) {
-    let request = DNSMessage::parse(buff).unwrap();
+    let request = Message::parse(buff).unwrap();
 
     debug!("\nGet request: {:?}", request);
     debug!("Flags: {}", request.header.flags);
@@ -109,10 +108,8 @@ async fn handle_request(
         .await
         .unwrap();
 
-    let mut reply = DNSMessage::reply_to(&request);
-    for resource in res.resources {
-        reply.add_resource(resource);
-    }
+    let mut reply = Message::reply_to(&request);
+    reply.copy_resources(&res);
 
     debug!("\nReply: {:?}", reply);
 
