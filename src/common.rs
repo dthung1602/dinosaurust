@@ -83,7 +83,7 @@ bitflags! {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct FlagRecordType(u16);
 
 bitflags! {
@@ -92,12 +92,11 @@ bitflags! {
         const NS = 2;
         const CNAME = 5;
         const SOA = 6;
-        // TODO const MX = 15;
         const AAAA = 28;
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FlagClassCode(u16);
 
 bitflags! {

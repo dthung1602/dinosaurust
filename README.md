@@ -18,5 +18,5 @@
   - [x] Writing
 - [x] Forward to other server
 - [ ] Caching policy
-- [ ] Other record types: AAAA, CNAME, NS, etc
+- [x] Other record types: AAAA, CNAME, NS, etc
 - [ ] Maintain own database
