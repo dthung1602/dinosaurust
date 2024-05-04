@@ -93,6 +93,7 @@ async fn handle_request(
     tx: mpsc::Sender<ResponsePair>,
     addr: SocketAddr,
 ) {
+    // TODO handle & response error
     let request = Message::parse(buff).unwrap();
 
     debug!("\nGet request: {:?}", request);

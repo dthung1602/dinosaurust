@@ -81,6 +81,7 @@ pub async fn forward_iterative(
             return Ok(res);
         }
 
+        // TODO handle case where upstream dns server don't provide glue records
         let server_ref = ans
             .servers
             .choose(&mut rand::thread_rng())
