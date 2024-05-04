@@ -96,7 +96,6 @@ pub async fn forward_iterative(
     }
 }
 
-
 #[derive(Debug, Clone)]
 struct Answer {
     servers: Vec<DNSServer>,
