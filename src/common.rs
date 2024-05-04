@@ -1,4 +1,5 @@
 use bitflags::bitflags;
+use static_init::dynamic;
 use std::collections::HashMap;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::string::String;
@@ -183,9 +184,9 @@ impl SerializeContext {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct LabelSeq {
-    labels: Vec<String>,
+    pub labels: Vec<String>,
 }
 
 pub const MAX_LABEL_LEN: usize = 63;
@@ -215,17 +216,14 @@ impl LabelSeq {
         context.root_buff.push(0);
     }
 
-    pub fn from_string(s: &str) -> Result<LabelSeq, *const str> {
+    pub fn from_string(s: &str) -> LabelSeq {
         let mut labels = vec![];
 
         for part in s.split('.') {
-            if part.len() > MAX_LABEL_LEN {
-                return Err("label is too long");
-            }
             labels.push(part.to_string());
         }
 
-        Ok(LabelSeq { labels })
+        LabelSeq { labels }
     }
 
     pub fn parse(context: &mut ParseContext) -> Result<LabelSeq, *const str> {
@@ -295,10 +293,30 @@ impl LabelSeq {
     }
 }
 
+impl Into<LabelSeq> for &str {
+    fn into(self) -> LabelSeq {
+        LabelSeq::from_string(self)
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct DNSServer {
-    name: LabelSeq,
-    ipv4addr: Ipv4Addr,
-    ipv6addr: Ipv6Addr,
+    pub name: LabelSeq,
+    pub ipv4addr: Option<Ipv4Addr>,
+    pub ipv6addr: Option<Ipv6Addr>,
+    pub port: usize,
+}
+
+impl DNSServer {
+    pub fn to_addr_str(&self) -> String {
+        if let Some(ip) = self.ipv4addr {
+            format!("{}:{}", ip, self.port)
+        } else if let Some(ip) = self.ipv6addr {
+            format!("{}:{}", ip, self.port)
+        } else {
+            String::new()
+        }
+    }
 }
 
 macro_rules! create_dns_servers {
@@ -306,31 +324,31 @@ macro_rules! create_dns_servers {
         vec![
             $(
                 DNSServer {
-                    name: LabelSeq::from_string($name).unwrap(),
-                    ipv4addr: $ipv4.parse().unwrap(),
-                    ipv6addr: $ipv6.parse().unwrap(),
+                    name: LabelSeq::from_string($name),
+                    ipv4addr: Some($ipv4.parse().unwrap()),
+                    ipv6addr: Some($ipv6.parse().unwrap()),
+                    port: 53
                 },
             )*
         ]
     };
 }
 
-impl DNSServer {
-    pub fn root_servers() -> Vec<DNSServer> {
-        create_dns_servers!(
-            ("a.root-servers.net", "198.41.0.4", "2001:503:ba3e::2:30"),
-            ("b.root-servers.net", "170.247.170.2", "2801:1b8:10::b"),
-            ("c.root-servers.net", "192.33.4.12", "2001:500:2::c"),
-            ("d.root-servers.net", "199.7.91.13", "2001:500:2d::d"),
-            ("e.root-servers.net", "192.203.230.10", "2001:500:a8::e"),
-            ("f.root-servers.net", "192.5.5.241", "2001:500:2f::f"),
-            ("g.root-servers.net", "192.112.36.4", "2001:500:12::d0d"),
-            ("h.root-servers.net", "198.97.190.53", "2001:500:1::53"),
-            ("i.root-servers.net", "192.36.148.17", "2001:7fe::53"),
-            ("j.root-servers.net", "192.58.128.30", "2001:503:c27::2:30"),
-            ("k.root-servers.net", "193.0.14.129", "2001:7fd::1"),
-            ("l.root-servers.net", "199.7.83.42", "2001:500:9f::42"),
-            ("m.root-servers.net", "202.12.27.33", "2001:dc3::35"),
-        )
-    }
-}
+#[dynamic]
+pub static ROOT_SERVERS: Vec<DNSServer> = {
+    create_dns_servers!(
+        ("a.root-servers.net", "198.41.0.4", "2001:503:ba3e::2:30"),
+        ("b.root-servers.net", "170.247.170.2", "2801:1b8:10::b"),
+        ("c.root-servers.net", "192.33.4.12", "2001:500:2::c"),
+        ("d.root-servers.net", "199.7.91.13", "2001:500:2d::d"),
+        ("e.root-servers.net", "192.203.230.10", "2001:500:a8::e"),
+        ("f.root-servers.net", "192.5.5.241", "2001:500:2f::f"),
+        ("g.root-servers.net", "192.112.36.4", "2001:500:12::d0d"),
+        ("h.root-servers.net", "198.97.190.53", "2001:500:1::53"),
+        ("i.root-servers.net", "192.36.148.17", "2001:7fe::53"),
+        ("j.root-servers.net", "192.58.128.30", "2001:503:c27::2:30"),
+        ("k.root-servers.net", "193.0.14.129", "2001:7fd::1"),
+        ("l.root-servers.net", "199.7.83.42", "2001:500:9f::42"),
+        ("m.root-servers.net", "202.12.27.33", "2001:dc3::35"),
+    )
+};

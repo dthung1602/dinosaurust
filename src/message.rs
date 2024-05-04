@@ -9,6 +9,7 @@ pub struct Message {
     pub questions: Vec<Question>,
     pub resources: Vec<ResourceRecord>,
     pub auth_resources: Vec<ResourceRecord>, // all must be of type SOA
+    pub addi_resources: Vec<ResourceRecord>,
 }
 
 impl Message {
@@ -18,6 +19,7 @@ impl Message {
             questions: vec![],
             resources: vec![],
             auth_resources: vec![],
+            addi_resources: vec![],
         }
     }
 
@@ -32,6 +34,7 @@ impl Message {
             questions,
             resources: vec![],
             auth_resources: vec![],
+            addi_resources: vec![],
         }
     }
 
@@ -66,6 +69,9 @@ impl Message {
         for r in &self.auth_resources {
             r.serialize(&mut context);
         }
+        for r in &self.addi_resources {
+            r.serialize(&mut context);
+        }
 
         context.to_vec()
     }
@@ -89,6 +95,11 @@ impl Message {
         for _ in 0..message.header.n_auth_res {
             let resource = ResourceRecord::parse(&mut context)?;
             message.auth_resources.push(resource);
+        }
+
+        for _ in 0..message.header.n_addi_res {
+            let resource = ResourceRecord::parse(&mut context)?;
+            message.addi_resources.push(resource);
         }
 
         Ok(message)

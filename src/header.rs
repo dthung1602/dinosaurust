@@ -7,7 +7,7 @@ pub struct Header {
     pub n_question: u16,
     pub n_answer: u16,
     pub n_auth_res: u16,
-    pub n_addi_rrs: u16,
+    pub n_addi_res: u16,
 }
 
 impl Header {
@@ -20,7 +20,7 @@ impl Header {
             n_question: 0,
             n_answer: 0,
             n_auth_res: 0,
-            n_addi_rrs: 0,
+            n_addi_res: 0,
         }
     }
 
@@ -31,7 +31,7 @@ impl Header {
             n_question: 0,
             n_answer: 0,
             n_auth_res: 0,
-            n_addi_rrs: 0,
+            n_addi_res: 0,
         };
         header.set_qr(FlagQR::R);
         header.set_aa(FlagAA::FALSE);
@@ -149,8 +149,8 @@ impl Header {
             self.n_answer as u8,
             (self.n_auth_res >> 8) as u8,
             self.n_auth_res as u8,
-            (self.n_addi_rrs >> 8) as u8,
-            self.n_addi_rrs as u8,
+            (self.n_addi_res >> 8) as u8,
+            self.n_addi_res as u8,
         ];
         context.append(&mut val)
     }
@@ -162,7 +162,7 @@ impl Header {
             n_question: 0,
             n_answer: 0,
             n_auth_res: 0,
-            n_addi_rrs: 0,
+            n_addi_res: 0,
         };
 
         let buff = context.current_slice();
@@ -178,7 +178,7 @@ impl Header {
         header.n_question = u16::from_be_bytes([buff[4], buff[5]]);
         header.n_answer = u16::from_be_bytes([buff[6], buff[7]]);
         header.n_auth_res = u16::from_be_bytes([buff[8], buff[9]]);
-        header.n_addi_rrs = u16::from_be_bytes([buff[10], buff[11]]);
+        header.n_addi_res = u16::from_be_bytes([buff[10], buff[11]]);
 
         context.advance(Self::SIZE);
         Ok(header)

@@ -8,6 +8,7 @@ use log::{debug, info};
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
+use crate::forwarder::ForwardContext;
 use config::Config;
 
 use crate::message::Message;
@@ -49,10 +50,10 @@ impl DinosaurustServer {
             while let Some((buff, addr)) = rx.recv().await {
                 let len = sock_clone.send_to(&buff[..], addr).await.unwrap();
                 debug!("\nSent {len} bytes to {addr}:");
-                for x in &buff {
-                    debug!("{:08b} ", x)
-                }
-                debug!("\n\n--------\n\n");
+                // for x in &buff {
+                //     debug!("{:08b} ", x)
+                // }
+                // debug!("\n\n--------\n\n");
             }
         });
 
@@ -95,16 +96,17 @@ async fn handle_request(
     let request = Message::parse(buff).unwrap();
 
     debug!("\nGet request: {:?}", request);
-    debug!("Flags: {}", request.header.flags);
-    debug!("QR {:?}", request.header.get_qr());
-    debug!("OPCODE {:?}", request.header.get_opcode());
-    debug!("AA {:?}", request.header.get_aa());
-    debug!("TC {:?}", request.header.get_tc());
-    debug!("RD {:?}", request.header.get_rd());
-    debug!("RA {:?}", request.header.get_ra());
-    debug!("RC {:?}", request.header.get_rcode());
+    // debug!("Flags: {}", request.header.flags);
+    // debug!("QR {:?}", request.header.get_qr());
+    // debug!("OPCODE {:?}", request.header.get_opcode());
+    // debug!("AA {:?}", request.header.get_aa());
+    // debug!("TC {:?}", request.header.get_tc());
+    // debug!("RD {:?}", request.header.get_rd());
+    // debug!("RA {:?}", request.header.get_ra());
+    // debug!("RC {:?}", request.header.get_rcode());
 
-    let res = forwarder::forward_recursive(request.questions[0].clone(), &cfg)
+    let mut context = ForwardContext::new();
+    let res = forwarder::forward_iterative(request.questions[0].clone(), &cfg, &mut context)
         .await
         .unwrap();
 

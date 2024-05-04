@@ -1,16 +1,16 @@
 use crate::common::{FlagClassCode, FlagRecordType, LabelSeq, ParseContext, SerializeContext};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct Question {
-    name: LabelSeq,
-    record_type: u16,
-    class_code: u16,
+    pub name: LabelSeq,
+    pub record_type: u16,
+    pub class_code: u16,
 }
 
 impl Question {
-    pub fn new(raw_name: String, record_type: FlagRecordType) -> Question {
+    pub fn new(name: LabelSeq, record_type: FlagRecordType) -> Question {
         Question {
-            name: LabelSeq::from_string(&raw_name).unwrap(),
+            name,
             record_type: record_type.bits(),
             class_code: FlagClassCode::IN.bits(),
         }

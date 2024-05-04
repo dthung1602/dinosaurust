@@ -18,7 +18,7 @@ async fn main() -> io::Result<()> {
     let mut msg = Message::new();
     msg.header.set_rd(FlagRD::TRUE);
 
-    let q1 = Question::new("www.google.com".to_string(), FlagRecordType::NS);
+    let q1 = Question::new("www.google.com".into(), FlagRecordType::AAAA);
     msg.add_question(q1);
     // let q2 = Question::new("google.com".to_string(), FlagRecordType::A);
     // msg.add_question(q2);

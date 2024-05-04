@@ -24,6 +24,9 @@ impl Config {
     pub fn socket_address_str(&self) -> String {
         format!("{}:{}", self.ip, self.port)
     }
+    pub fn forward_server_address_str(&self) -> String {
+        format!("{}:{}", self.forward_server_ip, self.forward_server_port)
+    }
 }
 
 pub fn load_config() -> Config {

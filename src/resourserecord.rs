@@ -137,7 +137,7 @@ impl ResourceRecord {
         context.advance(10);
         let data = Self::parse_data(context, record_type.clone(), length as usize)?;
 
-        Ok(ResourceRecord{
+        Ok(ResourceRecord {
             name,
             record_type,
             class_code,
