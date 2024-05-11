@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::io;
-use std::net::Ipv4Addr;
+use std::net::{IpAddr, Ipv4Addr};
 
 use log::{debug, info};
 use rand::seq::SliceRandom;
@@ -36,7 +36,7 @@ async fn send_message_to(msg: Message, server_addr: String) -> io::Result<Messag
     info!("Received {msg_size} bytes");
 
     let reply = Message::parse(buff).unwrap();
-    info!("Get reply {:?}", reply);
+    // info!("Get reply {:?}", reply);
 
     Ok(reply)
 }
@@ -60,8 +60,8 @@ const MAX_ITER_FORWARD: usize = 10;
 
 pub async fn forward_iterative(
     question: Question,
-    _config: &Config,
-    _context: &mut ForwardContext,
+    config: &Config,
+    context: &mut ForwardContext,
 ) -> io::Result<Message> {
     // TODO check cache before request
     // TODO select another server in case of failure
@@ -89,6 +89,15 @@ pub async fn forward_iterative(
         debug!("Select server {:?}", server_ref);
         server_addr = server_ref.to_addr_str();
 
+        if server_addr.is_empty() {
+            debug!("No glue record found for server {:?}", server_ref);
+            let question = Question::new(server_ref.name.clone(), FlagRecordType::A);
+            let mut context = ForwardContext::new();
+            let ans = Box::pin(forward_iterative(question, config, &mut context)).await?;
+            let ip = extract_ip_v4(ans)[0];
+            server_addr = format!("{ip}:53");
+        }
+
         counter += 1;
         if counter > MAX_ITER_FORWARD {
             // TODO
@@ -104,6 +113,13 @@ struct Answer {
 }
 
 fn extract_answer(msg: &Message, requested_name: &LabelSeq) -> Answer {
+    /**
+    Note that DNS server may not provide glue records for all NS entries
+    The NS entries are often randomly shuffled and the first ones usually have glue record
+    Therefore, we should keep the order of NS record in the answer
+    */
+
+    let mut servers = vec![];
     let mut name_to_svrs = HashMap::new();
     let mut resources = vec![];
 
@@ -118,7 +134,8 @@ fn extract_answer(msg: &Message, requested_name: &LabelSeq) -> Answer {
                     ipv6addr: None,
                     port: 53,
                 };
-                name_to_svrs.insert(server_name.clone(), server);
+                servers.push(server);
+                name_to_svrs.insert(server_name.clone(), servers.len() - 1);
             }
             _ => {
                 if record.name == *requested_name {
@@ -131,18 +148,29 @@ fn extract_answer(msg: &Message, requested_name: &LabelSeq) -> Answer {
     }
 
     for record in msg.addi_resources.iter() {
-        if let Some(server) = name_to_svrs.get_mut(&record.name) {
+        if let Some(srv_idx) = name_to_svrs.get_mut(&record.name) {
             if let ResourceData::A(ip) = record.data {
-                server.ipv4addr = Some(ip);
+                servers[*srv_idx].ipv4addr = Some(ip);
             }
             if let ResourceData::AAAA(ip) = record.data {
-                server.ipv6addr = Some(ip);
+                servers[*srv_idx].ipv6addr = Some(ip);
             }
         }
     }
 
-    Answer {
-        servers: name_to_svrs.values().cloned().collect(),
-        resources,
-    }
+    Answer { servers, resources }
+}
+
+fn extract_ip_v4(msg: Message) -> Vec<Ipv4Addr> {
+    msg.resources
+        .iter()
+        .chain(msg.auth_resources.iter())
+        .filter_map(|r| {
+            if let ResourceData::A(ip) = r.data {
+                Some(ip)
+            } else {
+                None
+            }
+        })
+        .collect()
 }
